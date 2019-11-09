@@ -66,9 +66,9 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="450" />
-    <option name="y" value="190" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="391" />
+    <option name="y" value="173" />
     <option name="width" value="1440" />
     <option name="height" value="775" />
   </component>
@@ -127,6 +127,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.testEnvironment" />
         <item itemvalue="Python.testEnvironment" />
       </list>
     </recent_temporary>
