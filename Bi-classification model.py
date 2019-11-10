@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 MAX_DOCUMENT_LEN = 300
 EMBEDDING_SIZE = 128
 
-myPath = 'Word2VecModel.model'
+myPath = 'ml_resources/Word2VecModel.model'
 Word2VecModel = gensim.models.Word2Vec.load(myPath)
 
 vocab_list = [word for word, Vocab in Word2VecModel.wv.vocab.items()]
@@ -49,7 +49,7 @@ def read_csv(filename):
     return X, Y
 
 
-X_train, Y_train = read_csv('train_set(20000).csv')
+X_train, Y_train = read_csv('ml_resources/train_set(20000).csv')
 # X_test, Y_test = read_csv('little_test.csv')
 
 
@@ -109,6 +109,6 @@ model.compile(optimizer=keras.optimizers.Adam(),
 
 model.summary()
 
-history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split=0.1)
+# history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split=0.1)
 
 model.save("Bi-model1.0.model")
