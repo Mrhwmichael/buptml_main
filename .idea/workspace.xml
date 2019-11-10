@@ -100,7 +100,7 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="192" />
+    <option name="x" value="191" />
     <option name="y" value="60" />
     <option name="width" value="1440" />
     <option name="height" value="775" />
@@ -181,7 +181,6 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.Bi-classification model" />
-        <item itemvalue="Python.testEnvironment" />
       </list>
     </recent_temporary>
   </component>
