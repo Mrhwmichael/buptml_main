@@ -1,3 +1,5 @@
 #用来忽略某些大文件的上传
 
 /ml_resources
+/.idea
+/Bi-model1.0.model
