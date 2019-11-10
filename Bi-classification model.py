@@ -5,9 +5,14 @@ from keras_preprocessing import sequence
 import numpy as np
 import gensim
 from tensorflow import keras
-from tensorflow.keras import layers
+from tensorflow.python.keras import layers
 import csv
-import matplotlib.pyplot as plt
+
+import logging
+import os
+
+logging.info('info message')
+logging.basicConfig(level=logging.INFO,filename='%Y-%m-%d TrainingLog.log',datefmt='%Y-%m-%d %A %H:%M:%S')
 
 MAX_DOCUMENT_LEN = 300
 EMBEDDING_SIZE = 128
@@ -44,12 +49,19 @@ def read_csv(filename):
             else:
                 content.append(row[0])
                 label.append(row[1])
-    X = np.asarray(content)
-    Y = np.asarray(label, dtype=int)
+    print(len(content))
+
+    np.random.seed(100)
+    np.random.shuffle(content)
+    np.random.seed(100)
+    np.random.shuffle(label)
+
+    X = np.asarray(content[0:50000])
+    Y = np.asarray(label[0:50000], dtype=int)
     return X, Y
 
 
-X_train, Y_train = read_csv('ml_resources/train_set(20000).csv')
+X_train, Y_train = read_csv('ml_resources/train_set(total).csv')
 # X_test, Y_test = read_csv('little_test.csv')
 
 
@@ -92,13 +104,12 @@ print(X_train)
 print(Y_train)
 print(X_train.shape, ' ', Y_train.shape)
 
-
 model = keras.Sequential([
     layers.Embedding(len(word_index), EMBEDDING_SIZE, input_length=MAX_DOCUMENT_LEN),
     layers.Bidirectional(layers.LSTM(128, return_sequences=True)),
     layers.Bidirectional(layers.LSTM(64)),
     layers.Dense(128, activation='relu'),
-    layers.Dense(1, activation='sigmoid')
+    layers.Dense(1, activation='sigmoid'),
     ])
 model.layers[0].set_weights([embeddings_matrix])
 model.layers[0].trainable = False
@@ -109,6 +120,6 @@ model.compile(optimizer=keras.optimizers.Adam(),
 
 model.summary()
 
-# history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split=0.1)
+history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split=0.05)
 
 model.save("Bi-model1.0.model")
