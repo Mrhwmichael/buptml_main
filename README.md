@@ -1,11 +1,15 @@
 # buptml_main
-This is the main machine learning program by team 201905009 of BUPT.
+This is the NLP program by team 201905009 of BUPT.
 
-#Introduction
+# Introduction
 
-This module uses python language and tf2.0 to finish NLP model.
+This module uses python language and tf2.0 to finish NLP model. The code belongs to its authors.
+The model relies on data in package ml_resources, and it isn't sync in this Github repository.
 
-##Authors
+## Contact
+If you're interested in this project or you want to discuss details of this project, please send email to mr_hw@outlook.com, and I'll reply asap.
+
+## Authors
 
 Haoyu Wang,
 Xinyu Zhang,
