@@ -8,12 +8,6 @@ from tensorflow import keras
 from tensorflow.python.keras import layers
 import csv
 
-import logging
-import os
-
-logging.info('info message')
-logging.basicConfig(level=logging.INFO,filename='%Y-%m-%d TrainingLog.log',datefmt='%Y-%m-%d %A %H:%M:%S')
-
 MAX_DOCUMENT_LEN = 300
 EMBEDDING_SIZE = 128
 
@@ -120,6 +114,6 @@ model.compile(optimizer=keras.optimizers.Adam(),
 
 model.summary()
 
-history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split=0.05)
+history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split=0.1)
 
 model.save("Bi-model1.0.model")
