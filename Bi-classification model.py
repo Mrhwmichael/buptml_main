@@ -9,10 +9,17 @@ from tensorflow.python.keras import layers
 import csv
 
 MAX_DOCUMENT_LEN = 300
+TRAINING_SIZE = 20000
+
+# 使用训练的word2Vec的词向量的配置
+myPath = 'ml_resources/Word2VecModel.vector'
+Word2VecModel = gensim.models.KeyedVectors.load_word2vec_format(myPath)
 EMBEDDING_SIZE = 128
 
-myPath = 'ml_resources/Word2VecModel.model'
-Word2VecModel = gensim.models.Word2Vec.load(myPath)
+# 使用腾讯70000词的词向量的配置
+# myPath = 'ml_resources/70000_tencent.vector'
+# Word2VecModel = gensim.models.KeyedVectors.load_word2vec_format(myPath)
+# EMBEDDING_SIZE = 200
 
 vocab_list = [word for word, Vocab in Word2VecModel.wv.vocab.items()]
 
@@ -50,8 +57,8 @@ def read_csv(filename):
     np.random.seed(100)
     np.random.shuffle(label)
 
-    X = np.asarray(content[0:50000])
-    Y = np.asarray(label[0:50000], dtype=int)
+    X = np.asarray(content[0:TRAINING_SIZE])
+    Y = np.asarray(label[0:TRAINING_SIZE], dtype=int)
     return X, Y
 
 
@@ -100,9 +107,9 @@ print(X_train.shape, ' ', Y_train.shape)
 
 model = keras.Sequential([
     layers.Embedding(len(word_index), EMBEDDING_SIZE, input_length=MAX_DOCUMENT_LEN),
-    layers.Bidirectional(layers.LSTM(128, return_sequences=True)),
+    layers.Bidirectional(layers.LSTM(EMBEDDING_SIZE, return_sequences=True)),
     layers.Bidirectional(layers.LSTM(64)),
-    layers.Dense(128, activation='relu'),
+    layers.Dense(EMBEDDING_SIZE, activation='relu'),
     layers.Dense(1, activation='sigmoid'),
     ])
 model.layers[0].set_weights([embeddings_matrix])

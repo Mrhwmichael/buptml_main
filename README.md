@@ -16,3 +16,14 @@ Xinyu Zhang,
 Ningyao Ju,
 Boguang Zhang,
 Yuejia Li,
+
+## File List in ml_resources
+````
+70000_tencent.vector
+Full_tencent.vector
+Word2VecModel.model
+Word2VecModel.vector
+train_set(total).csv
+train_set(20000).csv
+````
+
