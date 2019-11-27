@@ -8,8 +8,9 @@ from tensorflow import keras
 from tensorflow.python.keras import layers
 import csv
 
+# 配置相关维度，这里统一回归到这里
 MAX_DOCUMENT_LEN = 300
-TRAINING_SIZE = 20000
+TRAINING_SIZE = 20007
 
 # 使用训练的word2Vec的词向量的配置
 myPath = 'ml_resources/Word2VecModel.vector'
@@ -21,19 +22,22 @@ EMBEDDING_SIZE = 128
 # Word2VecModel = gensim.models.KeyedVectors.load_word2vec_format(myPath)
 # EMBEDDING_SIZE = 200
 
-vocab_list = [word for word, Vocab in Word2VecModel.wv.vocab.items()]
+# 构造包含所有词语的 list，以及初始化 “词语-序号”字典 和 “词向量”矩阵
+vocab_list = [word for word, Vocab in Word2VecModel.wv.vocab.items()]  # 存储 所有的 词语
 
-word_index = {" ": 0}
-word_vector = {}
+word_index = {" ": 0}  # 初始化 `[word : token]` ，后期 tokenize 语料库就是用该词典。  “词语-序号”字典
+word_vector = {}  # 初始化`[word : vector]`字典
 
+# 初始化存储所有向量的大矩阵，留意其中多一位（首行），词向量全为 0，用于 padding补零。
+# 行数为所有单词数+1
 embeddings_matrix = np.zeros((len(vocab_list) + 1, Word2VecModel.vector_size))
 
 # 填充上述的字典和大矩阵
 for i in range(len(vocab_list)):
     # print(i)
-    word = vocab_list[i]
-    word_index[word] = i + 1
-    word_vector[word] = Word2VecModel.wv[word]
+    word = vocab_list[i]  # 每个词语
+    word_index[word] = i + 1 # 词语：序号
+    word_vector[word] = Word2VecModel.wv[word] # 词语：词向量
     embeddings_matrix[i + 1] = Word2VecModel.wv[word]  # 词向量矩阵
 # print(embeddings_matrix.shape)
 print(word_index)
@@ -76,16 +80,16 @@ def read_csv(filename):
 
     X = np.asarray(content[0:TRAINING_SIZE])
     Y = np.asarray(label[0:TRAINING_SIZE], dtype=int)
-    A = np.asarray(label[0:TRAINING_SIZE], dtype=int)
-    B = np.asarray(label[0:TRAINING_SIZE], dtype=int)
-    C = np.asarray(label[0:TRAINING_SIZE], dtype=int)
-    D = np.asarray(label[0:TRAINING_SIZE], dtype=int)
+    A = np.asarray(score[0:TRAINING_SIZE], dtype=int)
+    B = np.asarray(star1[0:TRAINING_SIZE], dtype=int)
+    C = np.asarray(star2[0:TRAINING_SIZE], dtype=int)
+    D = np.asarray(star3[0:TRAINING_SIZE], dtype=int)
     return X, Y, A, B, C, D
 
 
 X_train, Y_train, score, star1, star2, star3 = read_csv('ml_resources/training_data_set.csv')
-behavior_input = [score, star1, star2, star3]
-print(len(score))
+behavior_input = np.concatenate((score.reshape(-1,1), star1.reshape(-1,1), star2.reshape(-1,1), star3.reshape(-1,1)), axis=1)
+print(behavior_input)
 # X_test, Y_test = read_csv('little_test.csv')
 
 
@@ -128,16 +132,19 @@ print(X_train)
 print(Y_train)
 print(X_train.shape, ' ', Y_train.shape)
 
-model = keras.Sequential()
-model.add(keras.layers.Embedding(len(word_index), EMBEDDING_SIZE, input_length=MAX_DOCUMENT_LEN, name = "embedding"))
-model.add(keras.layers.Bidirectional(layers.LSTM(EMBEDDING_SIZE, return_sequences=True), name = "Bi-directional-1"))
-model.add(keras.layers.Bidirectional(layers.LSTM(64), name = "Bi-directional-2"))
-
-# model.add(keras.layers.Concatenate([model.get_layer('Bi-directional-2').output, behavior_input]))
-model.add(keras.layers.Dense(EMBEDDING_SIZE, activation='relu'))
-model.add(keras.layers.Dense(1, activation='sigmoid'))
-model.layers[0].set_weights([embeddings_matrix])
-model.layers[0].trainable = False
+# 主训练模型部分
+input1 = keras.Input(shape=(MAX_DOCUMENT_LEN,))
+x = layers.Embedding(len(word_index), EMBEDDING_SIZE, input_length=MAX_DOCUMENT_LEN, embeddings_initializer=keras.initializers.Constant(embeddings_matrix))(input1)
+x = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(x)
+x = layers.Bidirectional(layers.LSTM(64))(x)
+x = layers.Dense(128, activation='relu')(x)
+# x = layers.Dense(1, activation='sigmoid')(x)
+# concatenate input1 and input 2
+input2 = keras.Input(shape=(4,))
+x = keras.layers.concatenate([x, input2])
+x = layers.Dense(5, activation='relu')(x)
+output_tensor = layers.Dense(1, activation='sigmoid')(x)
+model = keras.Model([input1, input2], output_tensor)
 
 model.compile(optimizer=keras.optimizers.Adam(),
               loss=keras.losses.binary_crossentropy,
@@ -146,14 +153,8 @@ model.compile(optimizer=keras.optimizers.Adam(),
 model.summary()
 
 # 模型可视化
-tensorboard = keras.callbacks.TensorBoard(log_dir='result', write_images=1, histogram_freq=1)
 
-history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split=0.1, callbacks=[tensorboard])
-
-# # 十折训练
-# for num in range(1,10):
-#     history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split = 0.1)
-
+history = model.fit([X_train, behavior_input], Y_train, batch_size=128, epochs=1, validation_split=0.1, callbacks=[keras.callbacks.TensorBoard(log_dir='result')])
 
 model.save("Bi-model1.0.model")
 model.save_weights("Bi-model1.0.h5")
