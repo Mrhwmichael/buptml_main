@@ -38,31 +38,54 @@ for i in range(len(vocab_list)):
 # print(embeddings_matrix.shape)
 print(word_index)
 
-
+# 目前生成六个内容，分别是label标签，总评score，星级别star1，star2，star3
 def read_csv(filename):
     content = []
-    label= []
+    label = []
+    score = []
+    star1 = []
+    star2 = []
+    star3 = []
     with open(filename, encoding='utf-8') as csvDataFile:
         csvReader = csv.reader((line.replace('\0', '') for line in csvDataFile),  delimiter=',')
         for row in csvReader:
-            if len(row)<2:
+            if len(row)<5:
                 print(row)
             else:
                 content.append(row[0])
                 label.append(row[1])
+                score.append(row[2])
+                star1.append(row[3])
+                star2.append(row[4])
+                star3.append(row[5])
     print(len(content))
+
 
     np.random.seed(100)
     np.random.shuffle(content)
     np.random.seed(100)
     np.random.shuffle(label)
+    np.random.seed(100)
+    np.random.shuffle(score)
+    np.random.seed(100)
+    np.random.shuffle(star1)
+    np.random.seed(100)
+    np.random.shuffle(star2)
+    np.random.seed(100)
+    np.random.shuffle(star3)
 
     X = np.asarray(content[0:TRAINING_SIZE])
     Y = np.asarray(label[0:TRAINING_SIZE], dtype=int)
-    return X, Y
+    A = np.asarray(label[0:TRAINING_SIZE], dtype=int)
+    B = np.asarray(label[0:TRAINING_SIZE], dtype=int)
+    C = np.asarray(label[0:TRAINING_SIZE], dtype=int)
+    D = np.asarray(label[0:TRAINING_SIZE], dtype=int)
+    return X, Y, A, B, C, D
 
 
-X_train, Y_train = read_csv('ml_resources/train_set(20000).csv')
+X_train, Y_train, score, star1, star2, star3 = read_csv('ml_resources/training_data_set.csv')
+behavior_input = [score, star1, star2, star3]
+print(len(score))
 # X_test, Y_test = read_csv('little_test.csv')
 
 
@@ -105,13 +128,14 @@ print(X_train)
 print(Y_train)
 print(X_train.shape, ' ', Y_train.shape)
 
-model = keras.Sequential([
-    layers.Embedding(len(word_index), EMBEDDING_SIZE, input_length=MAX_DOCUMENT_LEN),
-    layers.Bidirectional(layers.LSTM(EMBEDDING_SIZE, return_sequences=True)),
-    layers.Bidirectional(layers.LSTM(64)),
-    layers.Dense(EMBEDDING_SIZE, activation='relu'),
-    layers.Dense(1, activation='sigmoid'),
-    ])
+model = keras.Sequential()
+model.add(keras.layers.Embedding(len(word_index), EMBEDDING_SIZE, input_length=MAX_DOCUMENT_LEN, name = "embedding"))
+model.add(keras.layers.Bidirectional(layers.LSTM(EMBEDDING_SIZE, return_sequences=True), name = "Bi-directional-1"))
+model.add(keras.layers.Bidirectional(layers.LSTM(64), name = "Bi-directional-2"))
+
+# model.add(keras.layers.Concatenate([model.get_layer('Bi-directional-2').output, behavior_input]))
+model.add(keras.layers.Dense(EMBEDDING_SIZE, activation='relu'))
+model.add(keras.layers.Dense(1, activation='sigmoid'))
 model.layers[0].set_weights([embeddings_matrix])
 model.layers[0].trainable = False
 
@@ -121,7 +145,10 @@ model.compile(optimizer=keras.optimizers.Adam(),
 
 model.summary()
 
-history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split=0.1)
+# 模型可视化
+tensorboard = keras.callbacks.TensorBoard(log_dir='result', write_images=1, histogram_freq=1)
+
+history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split=0.1, callbacks=[tensorboard])
 
 # # 十折训练
 # for num in range(1,10):
@@ -130,7 +157,3 @@ history = model.fit(X_train, Y_train, batch_size=128, epochs=1, validation_split
 
 model.save("Bi-model1.0.model")
 model.save_weights("Bi-model1.0.h5")
-
-# 生成tensorboard
-writer = model.summary.FileWriter("./log", model.get_default_graph())
-writer.close()
