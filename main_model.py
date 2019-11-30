@@ -88,6 +88,7 @@ def read_csv(filename):
 
 
 X_train, Y_train, score, star1, star2, star3 = read_csv('ml_resources/training_data_set.csv')
+print(Y_train.mean()) # 统计数据集中1的占比
 behavior_input = np.concatenate((score.reshape(-1,1), star1.reshape(-1,1), star2.reshape(-1,1), star3.reshape(-1,1)), axis=1)
 print(behavior_input)
 # X_test, Y_test = read_csv('little_test.csv')
@@ -134,27 +135,67 @@ print(X_train.shape, ' ', Y_train.shape)
 
 # 主训练模型部分
 input1 = keras.Input(shape=(MAX_DOCUMENT_LEN,))
-x = layers.Embedding(len(word_index), EMBEDDING_SIZE, input_length=MAX_DOCUMENT_LEN, embeddings_initializer=keras.initializers.Constant(embeddings_matrix))(input1)
-x = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(x)
-x = layers.Bidirectional(layers.LSTM(64))(x)
-x = layers.Dense(128, activation='relu')(x)
+embedding = layers.Embedding(len(word_index), EMBEDDING_SIZE, input_length=MAX_DOCUMENT_LEN, embeddings_initializer=keras.initializers.Constant(embeddings_matrix))(input1)
+
+# # 使用RNN模型训练部分（结果为x）
+# x = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(embedding)
+# x = layers.Bidirectional(layers.LSTM(64))(x)
+# x = layers.Dense(128, activation='relu')(x)
+
+# 使用CNN模型训练部分（结果为y）
+filters = 250
+kernel_size = 3
+hidden_dims = 250
+max_features = 400000
+maxlen = 400
+batch_size = 32
+embedding_dims = 50
+y = layers.Embedding(max_features,
+                    embedding_dims,
+                    input_length=maxlen)
+y = layers.Dropout(0.2)(y)
+y = layers.Conv1D(filters,
+                 kernel_size,
+                 padding='valid',
+                 activation='relu',
+                 strides=1)(y)
+# we use max pooling:
+y = layers.GlobalMaxPooling1D()(y)
+
+# We add a vanilla hidden layer:
+y = layers.Dense(hidden_dims)(y)
+y = layers.Dropout(0.2)(y)
+y = layers.Activation('relu')(y)
+
+# We project onto a single unit output layer, and squash it with a sigmoid:
+y = layers.Dense(1)(y)
+y = layers.Activation('sigmoid')
+model = keras.Model(input1, y)
+model.compile(loss='binary_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+model.fit(X_train, Y_train,
+          batch_size=batch_size,
+          epochs=1,
+          validation_split = 0.1)
+
 # x = layers.Dense(1, activation='sigmoid')(x)
 # concatenate input1 and input 2
-input2 = keras.Input(shape=(4,))
-x = keras.layers.concatenate([x, input2])
-x = layers.Dense(5, activation='relu')(x)
-output_tensor = layers.Dense(1, activation='sigmoid')(x)
-model = keras.Model([input1, input2], output_tensor)
-
-model.compile(optimizer=keras.optimizers.Adam(),
-              loss=keras.losses.binary_crossentropy,
-              metrics=['accuracy'])
-
-model.summary()
-
-# 模型可视化
-
-history = model.fit([X_train, behavior_input], Y_train, batch_size=128, epochs=1, validation_split=0.1, callbacks=[keras.callbacks.TensorBoard(log_dir='result')])
-
-model.save("Bi-model1.0.model")
-model.save_weights("Bi-model1.0.h5")
+# input2 = keras.Input(shape=(4,))
+# x = keras.layers.concatenate([y, input2])
+# x = layers.Dense(5, activation='relu')(x)
+# output_tensor = layers.Dense(1, activation='sigmoid')(x)
+# model = keras.Model([input1, input2], output_tensor)
+#
+# model.compile(optimizer=keras.optimizers.Adam(),
+#               loss=keras.losses.binary_crossentropy,
+#               metrics=['accuracy'])
+#
+# model.summary()
+#
+# # 模型可视化
+#
+# history = model.fit([X_train, behavior_input], Y_train, batch_size=128, epochs=1, validation_split=0.1, callbacks=[keras.callbacks.TensorBoard(log_dir='result')])
+#
+# model.save("Bi-model1.0.model")
+# model.save_weights("Bi-model1.0.h5")
