@@ -2,6 +2,5 @@
 
 /ml_resources
 /.idea
-/Bi-model1.0.model
 /result
-Bi-model1.0.h5
+TrainResult_full.h5

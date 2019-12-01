@@ -6,7 +6,6 @@ import re
 from keras_preprocessing import sequence
 import numpy as np
 import gensim
-import tensorflow as tf
 import csv
 
 from keras.preprocessing import sequence
@@ -14,9 +13,6 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.layers import Embedding
 from keras.layers import Conv1D, GlobalMaxPooling1D
-
-physical_devices = tf.config.experimental.list_physical_devices('CPU')
-assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 
 # set parameters:
 max_features = 400000
@@ -143,6 +139,7 @@ model.add(Activation('relu'))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
+model.summary()
 model.compile(loss='binary_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])

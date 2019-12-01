@@ -4,13 +4,16 @@ import re
 from keras_preprocessing import sequence
 import numpy as np
 import gensim
-from tensorflow import keras
-from tensorflow.python.keras import layers
+import tensorflow.keras as keras
+from tensorflow.keras import layers
 import csv
+
+# 服务器配置
+
 
 # 配置相关维度，这里统一回归到这里
 MAX_DOCUMENT_LEN = 300
-TRAINING_SIZE = 20007
+TRAINING_SIZE = 60000
 
 # 使用训练的word2Vec的词向量的配置
 myPath = 'ml_resources/Word2VecModel.vector'
@@ -40,7 +43,7 @@ for i in range(len(vocab_list)):
     word_vector[word] = Word2VecModel.wv[word] # 词语：词向量
     embeddings_matrix[i + 1] = Word2VecModel.wv[word]  # 词向量矩阵
 # print(embeddings_matrix.shape)
-print(word_index)
+# print(word_index) # 查看大字典内容
 
 # 目前生成六个内容，分别是label标签，总评score，星级别star1，star2，star3
 def read_csv(filename):
@@ -137,23 +140,19 @@ print(X_train.shape, ' ', Y_train.shape)
 input1 = keras.Input(shape=(MAX_DOCUMENT_LEN,))
 embedding = layers.Embedding(len(word_index), EMBEDDING_SIZE, input_length=MAX_DOCUMENT_LEN, embeddings_initializer=keras.initializers.Constant(embeddings_matrix))(input1)
 
-# # 使用RNN模型训练部分（结果为x）
-# x = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(embedding)
-# x = layers.Bidirectional(layers.LSTM(64))(x)
-# x = layers.Dense(128, activation='relu')(x)
+# 使用RNN模型训练部分（结果为x）
+x = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(embedding)
+x = layers.Bidirectional(layers.LSTM(64))(x)
+x = layers.Dense(64, activation='relu')(x)
+x = layers.Dense(1, activation='sigmoid')(x)
 
 # 使用CNN模型训练部分（结果为y）
 filters = 250
 kernel_size = 3
 hidden_dims = 250
 max_features = 400000
-maxlen = 400
-batch_size = 32
-embedding_dims = 50
-y = layers.Embedding(max_features,
-                    embedding_dims,
-                    input_length=maxlen)
-y = layers.Dropout(0.2)(y)
+
+y = layers.Dropout(0.2)(embedding)
 y = layers.Conv1D(filters,
                  kernel_size,
                  padding='valid',
@@ -169,33 +168,23 @@ y = layers.Activation('relu')(y)
 
 # We project onto a single unit output layer, and squash it with a sigmoid:
 y = layers.Dense(1)(y)
-y = layers.Activation('sigmoid')
-model = keras.Model(input1, y)
-model.compile(loss='binary_crossentropy',
-              optimizer='adam',
-              metrics=['accuracy'])
-model.fit(X_train, Y_train,
-          batch_size=batch_size,
-          epochs=1,
-          validation_split = 0.1)
 
-# x = layers.Dense(1, activation='sigmoid')(x)
-# concatenate input1 and input 2
-# input2 = keras.Input(shape=(4,))
-# x = keras.layers.concatenate([y, input2])
-# x = layers.Dense(5, activation='relu')(x)
-# output_tensor = layers.Dense(1, activation='sigmoid')(x)
-# model = keras.Model([input1, input2], output_tensor)
-#
-# model.compile(optimizer=keras.optimizers.Adam(),
-#               loss=keras.losses.binary_crossentropy,
-#               metrics=['accuracy'])
-#
-# model.summary()
-#
-# # 模型可视化
-#
-# history = model.fit([X_train, behavior_input], Y_train, batch_size=128, epochs=1, validation_split=0.1, callbacks=[keras.callbacks.TensorBoard(log_dir='result')])
-#
-# model.save("Bi-model1.0.model")
-# model.save_weights("Bi-model1.0.h5")
+# 连接CNN和RNN模型
+input2 = keras.Input(shape=(1,))
+x = keras.layers.concatenate([x, y])
+x = layers.Dense(3, activation='relu')(x)
+output_tensor = layers.Dense(1, activation='sigmoid')(x)
+model = keras.Model([input1, input2], output_tensor)
+
+model.compile(optimizer=keras.optimizers.Adam(),
+              loss=keras.losses.binary_crossentropy,
+              metrics=['accuracy'])
+
+model.summary()
+
+# 模型可视化
+
+history = model.fit([X_train, score], Y_train, batch_size=128, epochs=3, validation_split=0.05, callbacks=[keras.callbacks.TensorBoard(log_dir='result')])
+
+model.save("TrainResult_full.h5")
+
