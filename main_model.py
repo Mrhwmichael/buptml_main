@@ -151,30 +151,30 @@ filters = 250
 kernel_size = 3
 hidden_dims = 250
 max_features = 400000
-
-y = layers.Dropout(0.2)(embedding)
-y = layers.Conv1D(filters,
-                 kernel_size,
-                 padding='valid',
-                 activation='relu',
-                 strides=1)(y)
-# we use max pooling:
-y = layers.GlobalMaxPooling1D()(y)
-
-# We add a vanilla hidden layer:
-y = layers.Dense(hidden_dims)(y)
-y = layers.Dropout(0.2)(y)
-y = layers.Activation('relu')(y)
-
-# We project onto a single unit output layer, and squash it with a sigmoid:
-y = layers.Dense(1)(y)
-
-# 连接CNN和RNN模型
-input2 = keras.Input(shape=(1,))
-x = keras.layers.concatenate([x, y])
-x = layers.Dense(3, activation='relu')(x)
-output_tensor = layers.Dense(1, activation='sigmoid')(x)
-model = keras.Model([input1, input2], output_tensor)
+#
+# y = layers.Dropout(0.2)(embedding)
+# y = layers.Conv1D(filters,
+#                  kernel_size,
+#                  padding='valid',
+#                  activation='relu',
+#                  strides=1)(y)
+# # we use max pooling:
+# y = layers.GlobalMaxPooling1D()(y)
+#
+# # We add a vanilla hidden layer:
+# y = layers.Dense(hidden_dims)(y)
+# y = layers.Dropout(0.2)(y)
+# y = layers.Activation('relu')(y)
+#
+# # We project onto a single unit output layer, and squash it with a sigmoid:
+# y = layers.Dense(1)(y)
+#
+# # 连接CNN和RNN模型
+# input2 = keras.Input(shape=(1,))
+# x = keras.layers.concatenate([x, input2])
+# x = layers.Dense(2, activation='relu')(x)
+# output_tensor = layers.Dense(1, activation='sigmoid')(x)
+model = keras.Model(input1, x)
 
 model.compile(optimizer=keras.optimizers.Adam(),
               loss=keras.losses.binary_crossentropy,
@@ -184,7 +184,7 @@ model.summary()
 
 # 模型可视化
 
-history = model.fit([X_train, score], Y_train, batch_size=128, epochs=3, validation_split=0.05, callbacks=[keras.callbacks.TensorBoard(log_dir='result')])
+history = model.fit(X_train, Y_train, batch_size=128, epochs=5, validation_split=0.05, callbacks=[keras.callbacks.TensorBoard(log_dir='result')])
 
 model.save("TrainResult_full.h5")
 
