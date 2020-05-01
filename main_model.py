@@ -13,7 +13,7 @@ import csv
 
 # 配置相关维度，这里统一回归到这里
 MAX_DOCUMENT_LEN = 300
-TRAINING_SIZE = 60000
+TRAINING_SIZE = 120000
 
 # 使用训练的word2Vec的词向量的配置
 myPath = 'ml_resources/Word2VecModel.vector'

@@ -7,7 +7,7 @@ i = 1
 j = 0
 line = f.readline()
 while line:
-    if  j<=30000 or j>309008:   # 一共339007条数据
+    if  j<=60000 or j>279008:   # 一共339007条数据
         f2.write('{}'.format(line))
         i += 1
     line = f.readline()
